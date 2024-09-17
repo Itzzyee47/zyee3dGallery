@@ -1,5 +1,6 @@
 // index.js
 const express = require('express');
+const axios = require('axios');
 const path = require('path');
 const app = express();
 
@@ -31,6 +32,20 @@ app.get('/', (req, res) => {
 // Route for the services page
 app.get('/services', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/views/services.html'));
+});
+
+//Route for getting the model from the web storage
+app.get('/model2', async (req, res) => {
+  try {
+    const response = await axios.get('https://firebasestorage.googleapis.com/v0/b/lsachatbot.appspot.com/o/models%2Fdonut.glb?alt=media&token=c9521955-2aab-4ab6-adfa-dda0183ec5f4', {
+      responseType: 'arraybuffer',
+      mode: 'no-cors'
+    });
+    res.set('Content-Type', 'model/gltf-binary');
+    res.send(response.data);
+  } catch (error) {
+    res.status(500).send('Error fetching the model');
+  }
 });
 
 // Route for the 3D gallery page

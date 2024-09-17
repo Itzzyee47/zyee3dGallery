@@ -3,7 +3,7 @@ import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { lightValues } from './values';
 import { setupFPSControls } from './cameraControls';
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
+import { getModel2Url } from './loadModels';
 
 // Setup
 export function initThreeScene(){
@@ -89,15 +89,15 @@ const loader = new GLTFLoader();
         console.error('An error occurred while loading the GLTF model:', error);
       }
     );
-
+const ur = "./models/donut.glb"; 
 const loader2 = new GLTFLoader();
   loader2.load(
-    '/models/donut.glb',
+    ur,
     (gltf) => {
       const model = gltf.scene;
       model.scale.set(8,8,8);
       model.position.setY(40);
-      model.name = 'Donut';
+      model.name = 'Donut';  
 
       scene.add(model);
       // update model to look reflective..

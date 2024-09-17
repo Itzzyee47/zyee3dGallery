@@ -12,14 +12,20 @@ export function setupFPSControls(camera, renderer) {
     const movementSpeed = 40;
     const move = { forward: false, backward: false, left: false, right: false };
   
-    //check curent location of camera...
-    document.addEventListener('keypress',(ev) =>{
-      //console.log(ev.key);
-      if(ev.key == " "){
+    // Boundaries (constants for the camera movement limits)
+    const boundaries = {
+        minX: -195.89336411911646,
+        maxX: 195.89336411911646,
+        minZ: -128.629661363364,
+        maxZ: 151.93708797511098,
+    };
+
+    // Log current camera position on spacebar press (for debugging)
+    document.addEventListener('keypress', (ev) => {
+      if (ev.key === " ") {
         console.log(camera.position);
       }
-    })
-    // x: -30.510787488700938 y:46.513984682533724
+    });
 
     // Add keyboard event listeners for movement
     document.addEventListener('keydown', (event) => {
@@ -38,7 +44,7 @@ export function setupFPSControls(camera, renderer) {
           break;
       }
     });
-  
+
     document.addEventListener('keyup', (event) => {
       switch (event.code) {
         case 'KeyW': // Stop moving forward
@@ -55,75 +61,37 @@ export function setupFPSControls(camera, renderer) {
           break;
       }
     });
-  
-    // Update camera movement based on input
+
+    // Update camera movement based on input and enforce boundaries
     function moveCamera(deltaTime) {
       const direction = new THREE.Vector3();
-  
+      
       if (move.forward) {
-        if(camera.position.z < -128.629661363364 ){
-          //console.log(camera.position.z)
-          let possition = camera.position.z;
-          console.log('At front or back wall!!')
-          camera.position.z = possition + 20;
-          
-        }else{
-          camera.getWorldDirection(direction);
-          camera.position.add(direction.multiplyScalar(movementSpeed * deltaTime));
-          camera.position.setY(44.58551523738378);
-        }
+        camera.getWorldDirection(direction);
+        camera.position.add(direction.multiplyScalar(movementSpeed * deltaTime));
       }
       if (move.backward) {
-        //151.93708797511098
-        if(camera.position.z > 151.93708797511098 ){
-          //console.log(camera.position.z)
-          let possition = camera.position.z;
-          console.log('At front or back wall!!')
-          camera.position.z = possition - 20;
-          
-        }else{
-          camera.getWorldDirection(direction);
-          camera.position.add(direction.multiplyScalar(-movementSpeed * deltaTime));
-          camera.position.setY(44.58551523738378);
-        }
-        
+        camera.getWorldDirection(direction);
+        camera.position.add(direction.multiplyScalar(-movementSpeed * deltaTime));
       }
       if (move.left) {
-        //-195.89336411911646
-        if(camera.position.x < -195.89336411911646 ){
-          //console.log(camera.position.z)
-          let possition = camera.position.x;
-          console.log('At left or right wall!!')
-          camera.position.x = possition + 20;
-          
-        }else{
-          camera.getWorldDirection(direction);
-          direction.cross(camera.up);
-          camera.position.add(direction.multiplyScalar(-movementSpeed * deltaTime));
-          camera.position.setY(44.58551523738378);
-        }
-        
+        camera.getWorldDirection(direction);
+        direction.cross(camera.up);
+        camera.position.add(direction.multiplyScalar(-movementSpeed * deltaTime));
       }
       if (move.right) {
-        //195.89336411911646
-        if(camera.position.x > 195.89336411911646 ){
-          //console.log(camera.position.z)
-          let possition = camera.position.x;
-          console.log('At left or right wall!!')
-          camera.position.x = possition - 20;
-          
-        }else{
-          camera.getWorldDirection(direction);
-          direction.cross(camera.up);
-          camera.position.add(direction.multiplyScalar(movementSpeed * deltaTime));
-          camera.position.setY(44.58551523738378);
-        }
-        
+        camera.getWorldDirection(direction);
+        direction.cross(camera.up);
+        camera.position.add(direction.multiplyScalar(movementSpeed * deltaTime));
       }
-    }
-  
-    return { controlz, moveCamera };
-  }
-  
 
-//add movement controls..
+      // Enforce boundaries
+      camera.position.x = Math.max(boundaries.minX, Math.min(boundaries.maxX, camera.position.x));
+      camera.position.z = Math.max(boundaries.minZ, Math.min(boundaries.maxZ, camera.position.z));
+
+      // Keep the camera height fixed if needed (optional)
+      camera.position.setY(44.58551523738378);
+    }
+
+    return { controlz, moveCamera };
+}
