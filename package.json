@@ -19,5 +19,5 @@
   },
   "devDependencies": {
     "@monogrid/gainmap-js": "^3.0.6"
-  }
+  } 
 }
