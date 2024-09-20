@@ -6,7 +6,7 @@ import { lights } from './lightValues';
 
 
 function PointLight() {
-  return <pointLight position={[0, 70, 0]} intensity={5000} />;
+  return <pointLight position={[0, 70, 0]} intensity={2000} />;
 }
 
 function RectAreaLights({ lights }) {
