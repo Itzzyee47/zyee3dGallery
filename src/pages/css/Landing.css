@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Honk:MORF,SHLN@0,57.4&family=Playpen+Sans:wght@100..800&display=swap');
+
+
+.playpen-sans-font {
+  font-family: "Playpen Sans", cursive;
+  font-optical-sizing: auto;
+  font-weight: 100; /* 100 to 800  */
+  font-style: normal;
+}
+.archivo-black-regular {
+    font-family: "Archivo Black", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.honk-font {
+    font-family: "Honk", system-ui;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    font-variation-settings:
+      "MORF" 15,
+      "SHLN" 50;
+}
+#landingPage{
+    width: 90%;
+    min-height: 100vh;
+    max-height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: "Playpen Sans", cursive;
+    font-weight: 700;
+    text-align: center;
+    
+    position: absolute;
+    padding: 0 5%;
+
+    background: linear-gradient(187deg, #96f9df, #d8e8c2, #e9ccf7, #aacdfb);
+    background-size: 800% 800%;
+  
+    -webkit-animation: bgGradiaent 20s ease infinite;
+    -moz-animation: bgGradiaent 20s ease infinite;
+    animation: bgGradiaent 20s ease infinite;
+  }
+  
+  @-webkit-keyframes bgGradiaent {
+    0%{background-position:14% 0%}
+    50%{background-position:87% 100%}
+    100%{background-position:14% 0%}
+  }
+  @-moz-keyframes bgGradiaent {
+    0%{background-position:14% 0%}
+    50%{background-position:87% 100%}
+    100%{background-position:14% 0%}
+  }
+  @keyframes bgGradiaent {
+    0%{background-position:14% 0%}
+    50%{background-position:87% 100%}
+    100%{background-position:14% 0%}
+  }
+h1{
+    font-size: 4rem; 
+    text-align: center;
+    
+}
+.aboutGallery{
+    font-size: 2rem;
+    color: rgb(62, 61, 61);
+}
+h4{
+    color: rgba(93, 35, 99, 0.851);
+    font-family: "Playpen Sans", cursive;
+    font-size: 1.5rem;
+}
+.link_div{
+    text-decoration: none;
+    border: 1px solid gray;
+    padding: 8px;
+    border-radius: 10px;
+    margin-top: 0.8rem;
+    font-family: "Honk", system-ui;
+    font-size: 1.4rem; 
+}
+.link_div:hover{
+    box-shadow: 1px 3px 8px rgba(128, 128, 128, 0.54);
+}
+
+
+@media screen and (max-width: 780px) {
+    h1{
+        font-size: 2.8rem;
+        line-height: 1;
+    }
+    
+    .aboutGallery {
+        font-size: 1.5rem;
+       
+    }
+}
+
+
+@media screen and (max-width: 340px) {
+    h1{
+        font-size: 2rem;
+    }
+    
+    .aboutGallery {
+        font-size: 1rem;
+       
+    }
+}

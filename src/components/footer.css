@@ -1,0 +1,9 @@
+footer{
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    background-color: gray;
+    color: rgba(255, 255, 255, 0.557);
+    z-index: 2;
+    font-family: "Playpen Sans", cursive;
+}

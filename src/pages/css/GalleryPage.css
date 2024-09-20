@@ -1,0 +1,46 @@
+*{
+    padding:0;
+    margin:0;
+}
+.galleryDiv{
+    position: absolute;
+    width:100%;
+    height:100vh;
+    padding:0;
+    margin:0;
+    z-index: 2;
+}
+.loadScreen{
+    width: 100%;
+    height: 100vh;
+    position: absolute;
+    display: flex;
+    text-align: center;
+    font-family: "Playpen Sans", cursive;
+    flex-direction: column;
+    justify-content: center;
+    align-Items: center;
+    background-color: #000;
+    color: #fff;
+    z-index:1;
+}
+
+.controls{
+    margin-top: 1rem;
+    color: rgb(104, 103, 103);
+}
+.controlBtns{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin-top: 0.5rem;
+}
+.controlBtn{
+    font-family: "Playpen Sans", cursive;
+    font-weight: 700;
+    border: 1px solid gray;
+    padding: 2px 8px;
+    border-radius: 5px;
+}
