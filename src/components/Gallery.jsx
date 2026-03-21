@@ -165,8 +165,8 @@ function ThreeScene() {
         publicId: cloudinaryData.publicId, // For potential deletion later
         position: { x: hit.point.x, y: hit.point.y, z: hit.point.z },
         normal: { x: hit.normal.x, y: hit.normal.y, z: hit.normal.z },
-        width: 25,
-        height: 18,
+        width: 52.5,
+        height: 35,
         addedAt: new Date().toISOString(),
       };
 
@@ -223,7 +223,7 @@ function ThreeScene() {
     }} />
 
     {/* P key hint */}
-    <div style={{
+    {/* <div style={{
       position: 'fixed',
       bottom: '20px',
       left: '50%',
@@ -238,7 +238,7 @@ function ThreeScene() {
       pointerEvents: 'none',
     }}>
       Press <strong>P</strong> to place an image at the laser point
-    </div>
+    </div> */}
 
     {/* Image selection overlay */}
     <ImageSelectMenu
