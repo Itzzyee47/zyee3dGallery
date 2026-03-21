@@ -4,10 +4,10 @@ import { PointerLockControls } from '@react-three/drei';
 import * as THREE from 'three';
 
 const boundaries = {
-  minX: -195.89336411911646,
-  maxX: 195.89336411911646,
-  minZ: -128.629661363364,
-  maxZ: 151.93708797511098,
+  minX: -64.60,
+  maxX: 598.78,
+  minZ: -212.18,
+  maxZ: 206.29,
 };
 
 const movementSpeed = 40; // Movement speed
@@ -34,6 +34,14 @@ function FPSControls() {
         case 'KeyD': // Move right
           setMove((prev) => ({ ...prev, right: true }));
           break;
+        // case 'Space': // Log camera position
+        //   event.preventDefault(); // Prevent page scroll
+        //   console.log('Camera Position:');
+        //   console.log(`X: ${camera.position.x.toFixed(2)}`);
+        //   console.log(`Y: ${camera.position.y.toFixed(2)}`);
+        //   console.log(`Z: ${camera.position.z.toFixed(2)}`);
+        //   console.log(`Position Array: [${camera.position.x}, ${camera.position.y}, ${camera.position.z}]`);
+        //   break;
         default:
           break;
       }
@@ -93,11 +101,11 @@ function FPSControls() {
       camera.position.add(velocity.current);
     }
 
-    // Enforce boundaries
+    // Enforce boundaries (COMMENTED OUT)
     camera.position.x = Math.max(boundaries.minX, Math.min(boundaries.maxX, camera.position.x));
     camera.position.z = Math.max(boundaries.minZ, Math.min(boundaries.maxZ, camera.position.z));
 
-    // Optional: Fix camera height
+    // Optional: Fix camera height (COMMENTED OUT)
     camera.position.y = 44.58551523738378;
   };
 

@@ -1,8 +1,17 @@
-import React, { useRef, useState } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useGLTF, Environment } from '@react-three/drei';
+import { useRef, useState, useEffect, useCallback } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { useGLTF, useAnimations } from '@react-three/drei';
 import FPSControls from './gwithFPS';
 import { lights } from './lightValues';
+import LaserPointer from './LaserPointer';
+import { GalleryImages } from './GalleryImagePlane';
+import ImageSelectMenu from './ImageSelectMenu';
+import {
+  loadGalleryImages,
+  saveGalleryImage,
+  generateId,
+  uploadToCloudinary,
+} from './cloudinaryStore';
 
 
 function PointLight() {
@@ -38,11 +47,13 @@ function Model({ path, scale = [1, 1, 1], position = [0, 0, 0], name }) {
     modelRef.current.rotation.y += 0.01;
   });
   
-  // Optional: Traverse to modify materials (e.g., making it reflective)
+  // Optimize materials for better performance
   scene.traverse((child) => {
     if (child.isMesh) {
       child.material.roughness = 0.2;
       child.material.envMapIntensity = 0.3;
+      child.castShadow = true;
+      child.receiveShadow = true;
     }
   });
   
@@ -50,41 +61,191 @@ function Model({ path, scale = [1, 1, 1], position = [0, 0, 0], name }) {
 }
 
 function Model2({ path, scale = [1, 1, 1], position = [0, 0, 0], name }) {
-  const { scene } = useGLTF(path);
+  const { scene, animations } = useGLTF(path);
+  const modelRef = useRef();
+  const { actions } = useAnimations(animations, modelRef);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    // Play all animations if they exist
+    if (animations && animations.length > 0) {
+      Object.values(actions).forEach((action) => {
+        if (action) action.play();
+      });
+    }
+  }, [animations, actions]);
+
+  // Set position and scale
   scene.scale.set(...scale);
   scene.position.set(...position);
   scene.name = name;
-  
-  // Optional: Traverse to modify materials (e.g., making it reflective)
+
+  // Optimize materials for mobile and desktop performance
   scene.traverse((child) => {
     if (child.isMesh) {
-      child.material.roughness = 0.1;
-      child.material.envMapIntensity = 0;
+      // Enhance visual quality with proper material settings
+      child.material.roughness = 0.15;
+      child.material.metalness = 0.5;
+      child.material.envMapIntensity = 0.2;
+      
+      // Enable shadows for better depth perception
+      child.castShadow = true;
+      child.receiveShadow = true;
+      
+      // Optimize for mobile
+      if (isMobile) {
+        child.material.side = 2; // DoubleSide optimization
+      }
     }
   });
-  
-  return <primitive object={scene} />;
+
+  return <primitive ref={modelRef} object={scene} />;
 }
 
 function ThreeScene() {
-  const [loading, setLoading] = useState(true);
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [showImageMenu, setShowImageMenu] = useState(false);
+  const [laserHit, setLaserHit] = useState(null);
+  const pendingHitRef = useRef(null);
+
+  // Load saved images on mount
+  useEffect(() => {
+    loadGalleryImages().then(setGalleryImages);
+  }, []);
+
+  // Handle laser hit updates
+  const handleHitUpdate = useCallback((hitInfo) => {
+    setLaserHit(hitInfo);
+  }, []);
+
+  // Listen for P key to open image menu
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.code === 'KeyP' && !showImageMenu) {
+        if (laserHit) {
+          pendingHitRef.current = { ...laserHit };
+          setShowImageMenu(true);
+          // Exit pointer lock so user can interact with the menu
+          if (document.pointerLockElement) {
+            document.exitPointerLock();
+          }
+        }
+      }
+      if (e.code === 'Escape' && showImageMenu) {
+        setShowImageMenu(false);
+        pendingHitRef.current = null;
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [laserHit, showImageMenu]);
+
+  // Handle image selection from the menu
+  const handleImageSelected = async (file) => {
+    try {
+      console.log('Uploading image to Cloudinary...');
+      const cloudinaryData = await uploadToCloudinary(file);
+      const hit = pendingHitRef.current;
+
+      if (!hit) return;
+
+      // Store only metadata + Cloudinary URL in IndexedDB
+      const entry = {
+        id: generateId(),
+        name: file.name,
+        imageUrl: cloudinaryData.url, // Use Cloudinary URL instead of base64
+        publicId: cloudinaryData.publicId, // For potential deletion later
+        position: { x: hit.point.x, y: hit.point.y, z: hit.point.z },
+        normal: { x: hit.normal.x, y: hit.normal.y, z: hit.normal.z },
+        width: 25,
+        height: 18,
+        addedAt: new Date().toISOString(),
+      };
+
+      const updated = await saveGalleryImage(entry);
+      setGalleryImages(updated);
+      setShowImageMenu(false);
+      pendingHitRef.current = null;
+    } catch (err) {
+      console.error('Failed to add image:', err);
+      alert('Failed to upload image. Check console for details.');
+    }
+  };
+
+  const handleCancelMenu = () => {
+    setShowImageMenu(false);
+    pendingHitRef.current = null;
+  };
 
   return (
     <>
     <Canvas
       camera={{ position: [0, 24.58551523738378, 137.12110667939183], fov: 75 }}
-      onCreated={({ gl }) => gl.setPixelRatio(window.devicePixelRatio)}
+      onCreated={({ gl }) => {
+        gl.setPixelRatio(window.devicePixelRatio);
+        gl.shadowMap.enabled = true;
+      }}
+      shadows
     >
       <ambientLight intensity={1} />
       <RectAreaLights lights={lights} />
       
         <Model path="/models/donut.glb" scale={[8, 8, 8]} position={[0, 40, 0]} name="Donut" />
-        <Model2 path="/models/3dGallery.glb" scale={[10, 10, 10]} position={[0, 0, 0]} name="Gallery" />
+        <Model2 path="/models/scene.gltf" scale={[10, 10, 10]} position={[0, 0, 0]} name="Gallery" />
       
+      <GalleryImages images={galleryImages} />
+      <LaserPointer onHitUpdate={handleHitUpdate} />
       <PointLight />
       <FPSControls />
     </Canvas>
 
+    {/* Crosshair */}
+    <div style={{
+      position: 'fixed',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      width: '6px',
+      height: '6px',
+      borderRadius: '50%',
+      backgroundColor: 'red',
+      border: '1px solid white',
+      zIndex: 10,
+      pointerEvents: 'none',
+    }} />
+
+    {/* P key hint */}
+    <div style={{
+      position: 'fixed',
+      bottom: '20px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      color: 'white',
+      fontSize: '14px',
+      fontFamily: 'monospace',
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      padding: '8px 16px',
+      borderRadius: '8px',
+      zIndex: 10,
+      pointerEvents: 'none',
+    }}>
+      Press <strong>P</strong> to place an image at the laser point
+    </div>
+
+    {/* Image selection overlay */}
+    <ImageSelectMenu
+      visible={showImageMenu}
+      onImageSelected={handleImageSelected}
+      onCancel={handleCancelMenu}
+    />
     </>
   );
 }
