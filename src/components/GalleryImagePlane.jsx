@@ -15,15 +15,25 @@ function GalleryImagePlane({ imageUrl, position, normal, width = 55, height = 48
   ];
 
   useEffect(() => {
-    if (!meshRef.current || !imageUrl) return;
+    if (!meshRef.current || !imageUrl) {
+      console.warn('⚠️ Missing meshRef or imageUrl:', { hasRef: !!meshRef.current, hasUrl: !!imageUrl });
+      return;
+    }
 
+    console.log('🔄 Loading image:', imageUrl);
     const loader = new THREE.TextureLoader();
     
     loader.load(
       imageUrl,
       (texture) => {
-        console.log('✅ Image loaded:', imageUrl);
+        console.log('✅ Image loaded successfully:', imageUrl);
         texture.colorSpace = THREE.SRGBColorSpace;
+        
+        if (!meshRef.current) {
+          console.warn('⚠️ Mesh ref no longer available after texture load');
+          return;
+        }
+        
         meshRef.current.material.map = texture;
         meshRef.current.material.needsUpdate = true;
 
@@ -35,9 +45,19 @@ function GalleryImagePlane({ imageUrl, position, normal, width = 55, height = 48
           meshRef.current.scale.set(height * imgAspect, height, 1);
         }
       },
-      undefined,
+      (progressEvent) => {
+        const percentComplete = (progressEvent.loaded / progressEvent.total) * 100;
+        console.log(`⏳ Loading progress: ${percentComplete.toFixed(0)}%`, imageUrl);
+      },
       (error) => {
         console.error('❌ Failed to load image:', imageUrl, error);
+        console.error('Error type:', error.type);
+        console.error('Error message:', error.message);
+        
+        // Check if it's a CORS error
+        if (error.message?.includes('cors') || error.message?.includes('CORS')) {
+          console.error('🚫 CORS ERROR: Canvas may be tainted. Check Cloudinary settings.');
+        }
       }
     );
   }, [imageUrl, width, height]);

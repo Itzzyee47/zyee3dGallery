@@ -14,6 +14,7 @@ import {
   saveGalleryImage,
   generateId,
   uploadToCloudinary,
+  testCloudinaryConnectivity,
 } from './cloudinaryStore';
 
 
@@ -118,6 +119,8 @@ function ThreeScene() {
   const [galleryImages, setGalleryImages] = useState([]);
   const [showImageMenu, setShowImageMenu] = useState(false);
   const [laserHit, setLaserHit] = useState(null);
+  const [debugMode, setDebugMode] = useState(false);
+  const [storageInfo, setStorageInfo] = useState({ source: 'loading...', count: 0 });
   const pendingHitRef = useRef(null);
 
   // Joystick input refs (shared between DOM joystick and Canvas controls)
@@ -129,13 +132,38 @@ function ThreeScene() {
 
   // Load saved images on mount
   useEffect(() => {
+    console.log('🔄 Starting image load...');
+    console.log('📱 Device type:', isMobile ? 'mobile' : 'desktop');
+    
+    // Test Cloudinary connectivity
+    testCloudinaryConnectivity();
+    
     loadGalleryImages()
       .then((images) => {
         console.log(`📸 Loaded ${images.length} images from storage`);
+        console.log('Images:', images);
+        
+        // Detect storage source
+        let source = 'Unknown';
+        if (images.length > 0) {
+          source = localStorage.getItem('zyee3d_gallery_images') ? 'localStorage' : 'IndexedDB';
+        }
+        
+        setStorageInfo({ source, count: images.length });
         setGalleryImages(images);
+        
+        if (images.length === 0) {
+          console.warn('⚠️ No images found in storage');
+          console.log('TROUBLESHOOTING:');
+          console.log('1. Check if you uploaded images on THIS device');
+          console.log('2. Look in DevTools → IndexedDB → galleryDB → galleryMetadata');
+          console.log('3. Check browser localStorage for "zyee3d_gallery_images"');
+          console.log('4. Check the 🔧 debug panel for storage source');
+        }
       })
       .catch((err) => {
         console.error('❌ Failed to load images:', err);
+        setStorageInfo({ source: 'ERROR', count: 0 });
         setGalleryImages([]);
       });
   }, []);
@@ -302,6 +330,79 @@ function ThreeScene() {
       onImageSelected={handleImageSelected}
       onCancel={handleCancelMenu}
     />
+
+    {/* Mobile Debug Panel */}
+    {isMobile && (
+      <button
+        onClick={() => setDebugMode(!debugMode)}
+        style={{
+          position: 'fixed',
+          top: 10,
+          right: 10,
+          width: 40,
+          height: 40,
+          borderRadius: '50%',
+          background: 'rgba(255, 0, 0, 0.7)',
+          color: 'white',
+          border: 'none',
+          fontSize: 20,
+          cursor: 'pointer',
+          zIndex: 1000,
+          fontWeight: 'bold',
+        }}
+        title="Toggle Debug Panel"
+      >
+        🔧
+      </button>
+    )}
+
+    {debugMode && isMobile && (
+      <div
+        style={{
+          position: 'fixed',
+          top: 60,
+          right: 10,
+          width: '90vw',
+          maxWidth: 300,
+          background: 'rgba(0, 0, 0, 0.95)',
+          color: '#0f0',
+          border: '2px solid #0f0',
+          borderRadius: 8,
+          padding: 12,
+          fontSize: 11,
+          fontFamily: 'monospace',
+          zIndex: 1000,
+          maxHeight: '60vh',
+          overflowY: 'auto',
+          lineHeight: 1.4,
+        }}
+      >
+        <div style={{ marginBottom: 8, fontWeight: 'bold', fontSize: 12 }}>
+          📱 DEBUG INFO
+        </div>
+        <div>🔗 Storage: {storageInfo.source}</div>
+        <div>🖼️ Images: {storageInfo.count}</div>
+        <div>📍 Device Type: {isMobile ? 'Mobile' : 'Desktop'}</div>
+        <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #0f0' }}>
+          <div style={{ fontWeight: 'bold', marginBottom: 4 }}>Loaded Images:</div>
+          {galleryImages.length === 0 ? (
+            <div style={{ color: '#f00' }}>❌ No images loaded</div>
+          ) : (
+            galleryImages.map((img, idx) => (
+              <div key={idx} style={{ marginBottom: 4, fontSize: 9, wordBreak: 'break-all' }}>
+                <div>#{idx + 1}: {img.name}</div>
+                <div style={{ color: '#0a0', marginLeft: 8 }}>
+                  URL: {img.imageUrl.substring(0, 40)}...
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+        <div style={{ marginTop: 8, fontSize: 9, color: '#ffa' }}>
+          Open DevTools (F12) Console for more details
+        </div>
+      </div>
+    )}
     </>
   );
 }

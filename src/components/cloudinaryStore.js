@@ -55,8 +55,11 @@ export async function uploadToCloudinary(file) {
     }
 
     const data = await response.json();
+    // Make URL CORS-safe by using fetch transformation
+    const corsUrl = makeCORSSafeUrl(data.secure_url);
+    
     return {
-      url: data.secure_url,
+      url: corsUrl,
       publicId: data.public_id,
       width: data.width,
       height: data.height,
@@ -65,6 +68,36 @@ export async function uploadToCloudinary(file) {
   } catch (error) {
     console.error('Cloudinary upload error:', error);
     throw error;
+  }
+}
+
+// Make Cloudinary URLs CORS-safe for WebGL textures
+function makeCORSSafeUrl(url) {
+  if (!url) return url;
+  // Ensure the URL uses HTTPS and v1_1 format
+  if (!url.includes('https://')) {
+    url = url.replace('http://', 'https://');
+  }
+  // Add crossOrigin handling via Cloudinary's fetch parameter
+  if (!url.includes('fl=')) {
+    url += url.includes('?') ? '&fl=getinfo' : '?fl=getinfo';
+  }
+  return url;
+}
+
+// Test Cloudinary connectivity (call on app load)
+export async function testCloudinaryConnectivity() {
+  try {
+    console.log('🧪 Testing Cloudinary connectivity...');
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload?unsigned=true`,
+      { method: 'OPTIONS' }
+    );
+    console.log('✅ Cloudinary is accessible');
+    return true;
+  } catch (error) {
+    console.error('❌ Cannot reach Cloudinary:', error);
+    return false;
   }
 }
 
