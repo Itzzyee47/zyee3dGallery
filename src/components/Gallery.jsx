@@ -132,6 +132,16 @@ function ThreeScene() {
   useEffect(() => {
     loadImagesFromFirestore()
       .then((images) => {
+        console.log('📷 Loaded images from Firestore:', images);
+        images.forEach((img, idx) => {
+          console.log(`  [${idx}] ${img.name}`, {
+            id: img.id,
+            url: img.imageUrl,
+            position: img.position,
+            normal: img.normal,
+            dimensions: { width: img.width, height: img.height }
+          });
+        });
         setGalleryImages(images);
       })
       .catch((err) => {
@@ -186,11 +196,18 @@ function ThreeScene() {
         height: 35,
       };
 
+      console.log('📝 Image entry prepared:', imageEntry);
+      console.log('   Hit position:', hit.point);
+      console.log('   Hit normal:', hit.normal);
+
       // Save to Firestore (with server timestamp)
       const savedImage = await saveImageToFirestore(imageEntry);
+      console.log('✅ Image saved to Firestore with ID:', savedImage.id);
       
       // Update local state with the saved image (including ID from Firestore)
-      setGalleryImages([savedImage, ...galleryImages]);
+      const updatedImages = [savedImage, ...galleryImages];
+      console.log('📊 Updated images list:', updatedImages);
+      setGalleryImages(updatedImages);
       
       setShowImageMenu(false);
       pendingHitRef.current = null;
