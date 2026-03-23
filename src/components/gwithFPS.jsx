@@ -10,7 +10,7 @@ const boundaries = {
   maxZ: 206.29,
 };
 
-const movementSpeed = 40; // Movement speed
+const movementSpeed = 45; // Movement speed
 
 // Main FPS component
 function FPSControls() {
@@ -34,14 +34,14 @@ function FPSControls() {
         case 'KeyD': // Move right
           setMove((prev) => ({ ...prev, right: true }));
           break;
-        // case 'Space': // Log camera position
-        //   event.preventDefault(); // Prevent page scroll
-        //   console.log('Camera Position:');
-        //   console.log(`X: ${camera.position.x.toFixed(2)}`);
-        //   console.log(`Y: ${camera.position.y.toFixed(2)}`);
-        //   console.log(`Z: ${camera.position.z.toFixed(2)}`);
-        //   console.log(`Position Array: [${camera.position.x}, ${camera.position.y}, ${camera.position.z}]`);
-        //   break;
+        case 'Space': // Log camera position
+          event.preventDefault(); // Prevent page scroll
+          console.log('Camera Position:');
+          console.log(`X: ${camera.position.x.toFixed(2)}`);
+          console.log(`Y: ${camera.position.y.toFixed(2)}`);
+          console.log(`Z: ${camera.position.z.toFixed(2)}`);
+          console.log(`Position Array: [${camera.position.x}, ${camera.position.y}, ${camera.position.z}]`);
+          break;
         default:
           break;
       }

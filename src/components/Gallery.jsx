@@ -2,6 +2,9 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF, useAnimations } from '@react-three/drei';
 import FPSControls from './gwithFPS';
+import MobileFPSControls from './MobileFPSControls';
+import VirtualJoystick from './VirtualJoystick';
+import { useIsMobile } from './useIsMobile';
 import { lights } from './lightValues';
 import LaserPointer from './LaserPointer';
 import { GalleryImages } from './GalleryImagePlane';
@@ -111,10 +114,18 @@ function Model2({ path, scale = [1, 1, 1], position = [0, 0, 0], name }) {
 }
 
 function ThreeScene() {
+  const isMobile = useIsMobile();
   const [galleryImages, setGalleryImages] = useState([]);
   const [showImageMenu, setShowImageMenu] = useState(false);
   const [laserHit, setLaserHit] = useState(null);
   const pendingHitRef = useRef(null);
+
+  // Joystick input refs (shared between DOM joystick and Canvas controls)
+  const moveInput = useRef({ x: 0, y: 0 });
+  const lookInput = useRef({ x: 0, y: 0 });
+
+  const handleMove = useCallback((v) => { moveInput.current = v; }, []);
+  const handleLook = useCallback((v) => { lookInput.current = v; }, []);
 
   // Load saved images on mount
   useEffect(() => {
@@ -188,7 +199,7 @@ function ThreeScene() {
   return (
     <>
     <Canvas
-      camera={{ position: [0, 24.58551523738378, 137.12110667939183], fov: 75 }}
+      camera={{ position: [577.5609661389192, 44.58551523738378, 15.620699438870597], fov: 75 }}
       onCreated={({ gl }) => {
         gl.setPixelRatio(window.devicePixelRatio);
         gl.shadowMap.enabled = true;
@@ -204,7 +215,11 @@ function ThreeScene() {
       <GalleryImages images={galleryImages} />
       <LaserPointer onHitUpdate={handleHitUpdate} />
       <PointLight />
-      <FPSControls />
+      {isMobile ? (
+        <MobileFPSControls moveRef={moveInput} lookRef={lookInput} />
+      ) : (
+        <FPSControls />
+      )}
     </Canvas>
 
     {/* Crosshair */}
@@ -239,6 +254,39 @@ function ThreeScene() {
     }}>
       Press <strong>P</strong> to place an image at the laser point
     </div> */}
+
+    {/* Mobile joysticks */}
+    {isMobile && !showImageMenu && (
+      <VirtualJoystick onMove={handleMove} onLook={handleLook} />
+    )}
+
+    {/* Mobile place-image button */}
+    {/* {isMobile && !showImageMenu && laserHit && (
+      <button
+        onClick={() => {
+          pendingHitRef.current = { ...laserHit };
+          setShowImageMenu(true);
+        }}
+        style={{
+          position: 'fixed',
+          bottom: 170,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          padding: '12px 24px',
+          fontSize: 14,
+          fontFamily: 'monospace',
+          fontWeight: 700,
+          color: '#fff',
+          background: 'rgba(37, 99, 235, 0.85)',
+          border: '2px solid rgba(255,255,255,0.3)',
+          borderRadius: 12,
+          zIndex: 100,
+          touchAction: 'manipulation',
+        }}
+      >
+        Place Image
+      </button>
+    )} */}
 
     {/* Image selection overlay */}
     <ImageSelectMenu
