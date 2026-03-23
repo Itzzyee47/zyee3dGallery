@@ -18,19 +18,28 @@ function GalleryImagePlane({ imageUrl, position, normal, width = 55, height = 48
     if (!meshRef.current || !imageUrl) return;
 
     const loader = new THREE.TextureLoader();
-    loader.load(imageUrl, (texture) => {
-      texture.colorSpace = THREE.SRGBColorSpace;
-      meshRef.current.material.map = texture;
-      meshRef.current.material.needsUpdate = true;
+    
+    loader.load(
+      imageUrl,
+      (texture) => {
+        console.log('✅ Image loaded:', imageUrl);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        meshRef.current.material.map = texture;
+        meshRef.current.material.needsUpdate = true;
 
-      // Adjust aspect ratio based on image dimensions
-      const imgAspect = texture.image.width / texture.image.height;
-      if (imgAspect > 1) {
-        meshRef.current.scale.set(width, width / imgAspect, 1);
-      } else {
-        meshRef.current.scale.set(height * imgAspect, height, 1);
+        // Adjust aspect ratio based on image dimensions
+        const imgAspect = texture.image.width / texture.image.height;
+        if (imgAspect > 1) {
+          meshRef.current.scale.set(width, width / imgAspect, 1);
+        } else {
+          meshRef.current.scale.set(height * imgAspect, height, 1);
+        }
+      },
+      undefined,
+      (error) => {
+        console.error('❌ Failed to load image:', imageUrl, error);
       }
-    });
+    );
   }, [imageUrl, width, height]);
 
   useEffect(() => {

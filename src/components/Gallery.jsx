@@ -129,7 +129,15 @@ function ThreeScene() {
 
   // Load saved images on mount
   useEffect(() => {
-    loadGalleryImages().then(setGalleryImages);
+    loadGalleryImages()
+      .then((images) => {
+        console.log(`📸 Loaded ${images.length} images from storage`);
+        setGalleryImages(images);
+      })
+      .catch((err) => {
+        console.error('❌ Failed to load images:', err);
+        setGalleryImages([]);
+      });
   }, []);
 
   // Handle laser hit updates
@@ -209,7 +217,7 @@ function ThreeScene() {
       <ambientLight intensity={1} />
       <RectAreaLights lights={lights} />
       
-        <Model path="/models/donut.glb" scale={[8, 8, 8]} position={[0, 40, 0]} name="Donut" />
+        <Model path="/models/donut.glb" scale={[14, 14, 14]} position={[0, 40, 0]} name="Donut" />
         <Model2 path="/models/scene.gltf" scale={[10, 10, 10]} position={[0, 0, 0]} name="Gallery" />
       
       <GalleryImages images={galleryImages} />

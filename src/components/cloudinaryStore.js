@@ -1,9 +1,10 @@
 // Cloudinary storage module
-// Uses Cloudinary for image hosting + IndexedDB for metadata
+// Uses Cloudinary for image hosting + IndexedDB + localStorage for metadata sync
 
 const DB_NAME = 'galleryDB';
 const DB_VERSION = 2;
 const STORE_NAME = 'galleryMetadata';
+const LOCAL_STORAGE_KEY = 'zyee3d_gallery_images';
 
 const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
@@ -67,7 +68,7 @@ export async function uploadToCloudinary(file) {
   }
 }
 
-// Load all saved gallery metadata from IndexedDB
+// Load all saved gallery metadata from IndexedDB, with localStorage fallback
 export async function loadGalleryImages() {
   try {
     const db = await openDB();
@@ -75,16 +76,64 @@ export async function loadGalleryImages() {
       const tx = db.transaction(STORE_NAME, 'readonly');
       const store = tx.objectStore(STORE_NAME);
       const request = store.getAll();
-      request.onsuccess = () => resolve(request.result || []);
+      
+      request.onsuccess = () => {
+        const images = request.result || [];
+        // If IndexedDB is empty, try localStorage as fallback
+        if (images.length === 0) {
+          const storedImages = loadFromLocalStorage();
+          if (storedImages.length > 0) {
+            console.log('⚡ Loaded images from localStorage fallback:', storedImages.length);
+            // Sync localStorage images back to IndexedDB
+            syncToIndexedDB(storedImages);
+          }
+          resolve(storedImages);
+        } else {
+          resolve(images);
+        }
+      };
       request.onerror = () => reject(request.error);
     });
   } catch (e) {
     console.error('Failed to load gallery images:', e);
+    // Final fallback to localStorage
+    return loadFromLocalStorage();
+  }
+}
+
+// Helper: Load images from localStorage
+function loadFromLocalStorage() {
+  try {
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (e) {
+    console.error('Failed to load from localStorage:', e);
     return [];
   }
 }
 
-// Save image metadata to IndexedDB (image itself is on Cloudinary)
+// Helper: Save images to localStorage for cross-device sync
+function saveToLocalStorage(images) {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(images));
+  } catch (e) {
+    console.error('Failed to save to localStorage:', e);
+  }
+}
+
+// Helper: Sync localStorage images to IndexedDB
+async function syncToIndexedDB(images) {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    images.forEach((img) => store.put(img));
+  } catch (e) {
+    console.error('Failed to sync to IndexedDB:', e);
+  }
+}
+
+// Save image metadata to IndexedDB + localStorage for cross-device sync
 export async function saveGalleryImage(imageEntry) {
   try {
     const db = await openDB();
@@ -94,6 +143,9 @@ export async function saveGalleryImage(imageEntry) {
       store.put(imageEntry);
       tx.oncomplete = async () => {
         const all = await loadGalleryImages();
+        // Also sync to localStorage
+        saveToLocalStorage(all);
+        console.log('✅ Image saved to Cloudinary + synced to IndexedDB & localStorage');
         resolve(all);
       };
       tx.onerror = () => reject(tx.error);
@@ -104,7 +156,7 @@ export async function saveGalleryImage(imageEntry) {
   }
 }
 
-// Remove a gallery image by id (deletes metadata, Cloudinary keeps the file)
+// Remove a gallery image by id (deletes metadata from all stores)
 export async function removeGalleryImage(id) {
   try {
     const db = await openDB();
@@ -114,6 +166,9 @@ export async function removeGalleryImage(id) {
       store.delete(id);
       tx.oncomplete = async () => {
         const all = await loadGalleryImages();
+        // Sync deletion to localStorage
+        saveToLocalStorage(all);
+        console.log('🗑️ Image removed and synced across storage');
         resolve(all);
       };
       tx.onerror = () => reject(tx.error);
